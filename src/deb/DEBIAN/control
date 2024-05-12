@@ -1,0 +1,9 @@
+Package: upg
+Version: 1.0
+Maintainer: Xatra1
+Architecture: all
+Description:
+  Automation script for upgrading packages with APT, Pacman, Flatpak, and Snap.
+  Also performs some other tasks like initramfs regeneration, GRUB configuration updates, 
+  indexing of the filesystem and clearing of the cache memory.
+Installed-Size: 17
