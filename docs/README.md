@@ -7,7 +7,7 @@ This script will utilize the following commands on your system:
 - updatedb
 - update-initramfs/mkinitcpio
 - grub-mkconfig\[*]
-- sync\[*]
+- sync\[*] (Not to be confused with 'systemctl')
 - sysctl\[*]
 - rm\[*]  
   
