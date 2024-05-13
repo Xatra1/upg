@@ -33,6 +33,6 @@ Then, you need to create the proper directories for the make operation to work.
 
 After setting up the proper directories, run ``make upg`` to compile the executable.  
   
-You then have two options:  
+You then have two options to install the program:  
 ``make build-pkg`` - Builds and installs a Debian package. Requires dpkg.  
 ``make install`` - Installs the program into the /usr/bin directory.
