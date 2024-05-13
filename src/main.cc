@@ -56,6 +56,8 @@ int main(int argc, char *argv[]) {
   // APT
   //
   cmd.open("/usr/bin/apt");
+  if (!cmd)
+    cmd.open("/usr/bin/apt-get");
   if (cmd) {
     system("sudo dpkg --configure -a");
     cout << "\e[33;1;37mUpdating repositories...\e[0m\n";
