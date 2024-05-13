@@ -1,12 +1,16 @@
-CC=c++
-DIR=src/deb/usr/bin/upg
+BIN=src/deb/usr/bin/upg
+INS_DIR=/usr/bin/upg
+DEB_DIR=src/deb
+CONTROL_FILE=src/deb/DEBIAN/control
 
-upg: src/main.cc src/deb/DEBIAN/control
-	$(CC) -o $(DIR) src/main.cc
+upg: src/main.cc 
+	c++ -o $(BIN) src/main.cc
 
-build-pkg:
-	dpkg-deb --build src/deb
-	sudo dpkg -i src/deb.deb
+build-pkg: $(CONTROL_FILE) $(BIN)
+	@echo -e '\e[33;1;37mBuilding and installing a package for upg...\e[0m'
+	dpkg-deb --build $(DEB_DIR)
+	sudo dpkg -i $(DEB_DIR).deb
 	
-install:
-	sudo install src/deb/usr/bin/upg /usr/bin/upg
+install: $(BIN)
+	@echo -e '\e[;33;1;37mInstalling upg using generic 'install' command...\e[0m'
+	sudo install $(BIN) $(INS_DIR)
