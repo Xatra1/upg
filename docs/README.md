@@ -4,7 +4,7 @@ This script will utilize the following commands on your system:
 - APT/Pacman
 - Flatpak
 - Snap
-- updatedb\[*]
+- updatedb
 - update-initramfs/mkinitcpio
 - grub-mkconfig\[*]
 - sync\[*]
