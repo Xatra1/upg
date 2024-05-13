@@ -12,5 +12,5 @@ build-pkg: $(CONTROL_FILE) $(BIN)
 	sudo dpkg -i $(DEB_DIR).deb
 	
 install: $(BIN)
-	@echo -e '\e[;33;1;37mInstalling upg using generic 'install' command...\e[0m'
+	@echo -e '\e[33;1;37mInstalling upg using generic install command...\e[0m'
 	sudo install $(BIN) $(INS_DIR)
