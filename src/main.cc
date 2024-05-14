@@ -1,30 +1,43 @@
-// Header inclusions and definitions
+// Header inclusions
 #include <cstdlib>
 #include <fstream>
 #include <getopt.h>
 #include <iostream>
+using namespace std;
+
+// Declarations and definitions
 #define no_argument 0
 #define required_argument 1
 #define optional_argument 2
-
-// Declarations
-using namespace std;
 int usage(int rcode);
 bool verbose = false;
+int assumeno = 0, assumeyes = 0;
 
 // Print the usage doc and exit with status rcode
 int usage(int rcode) {
   cout << R"EOF(upg - automation script for upgrading packages with APT,
 Pacman, Flatpak, and Snap. Also performs some other tasks
 like initramfs regeneration, GRUB configuration updates,
-indexing of the filesystem and clearing of the cache 
+indexing of the filesystem and clearing of the cache
 memory.
+Usage: upg [-hnyv]
 
 -h, --help, --usage     Prints this help document and
                         terminates the program.
 
+-n, --assumeno          Skips the filesystem index prompt
+                        entirely, without performing any
+                        action.
+
 -v, --verbose           Allows some commands to output
                         verbosely.
+
+-y, --assumeyes         Skips the filesystem index prompt, 
+                        performing all actions.
+
+Only one argument may be passed to the program at at time.
+If multiple arguments are passed, only the first one will
+be recognized.
 
 Report bugs to <https://github.com/Xatra1/upg>
 )EOF";
@@ -33,12 +46,12 @@ Report bugs to <https://github.com/Xatra1/upg>
 
 int main(int argc, char *argv[]) {
   int index;
-  const struct option longopts[] = {
-      {"help", no_argument, 0, 'h'},
-      {"usage", no_argument, 0, 'h'},
-      {"verbose", no_argument, 0, 'v'},
-  };
-  switch (getopt_long(argc, argv, "hv", longopts, &index)) {
+  const struct option longopts[] = {{"help", no_argument, 0, 'h'},
+                                    {"usage", no_argument, 0, 'h'},
+                                    {"assumeno", no_argument, 0, 'n'},
+                                    {"verbose", no_argument, 0, 'v'},
+                                    {"assumeyes", no_argument, 0, 'y'}};
+  switch (getopt_long(argc, argv, "hnyv", longopts, &index)) {
   case 'h':
     usage(0);
     break;
@@ -47,6 +60,18 @@ int main(int argc, char *argv[]) {
             "verbose output.\e[0m\n";
     verbose = true;
     break;
+  case 'n':
+    assumeno = 1;
+    break;
+  case 'y':
+    assumeyes = 1;
+    break;
+  }
+  if (assumeyes && assumeno) {
+    cout << "\e[33;1;33mwarn:\e[0m argument '-n' and '-y' cannot be used "
+            "together.\n";
+    assumeno = 0;
+    assumeyes = 0;
   }
   // Used to check if commands exist
   ifstream cmd;
@@ -111,10 +136,12 @@ int main(int argc, char *argv[]) {
   //
   // Filesystem indexing (updatedb)
   //
-  cout << "\e[33;1;37mIndex the filesystem? This can take a very long time. "
-          "[y/n]: \e[0m";
-  cin >> ans;
-  if (ans == 'y') {
+  if (!assumeno && !assumeyes) {
+    cout << "\e[33;1;37mIndex the filesystem? This can take a very long time. "
+            "[y/n]: \e[0m";
+    cin >> ans;
+  }
+  if ((ans == 'y' || assumeyes) && !assumeno) {
     if (verbose)
       system("sudo updatedb -v");
     else
