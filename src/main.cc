@@ -12,59 +12,69 @@ using namespace std;
 int usage(int rcode);
 bool verbose = false;
 int assumeno = 0, assumeyes = 0;
+const struct option longopts[] = {
+    {"help", no_argument, 0, 'h'},      {"usage", no_argument, 0, 'h'},
+    {"assumeno", no_argument, 0, 'n'},  {"verbose", no_argument, 0, 'v'},
+    {"assumeyes", no_argument, 0, 'y'}, {0, 0, 0, 0}};
 
 // Print the usage doc and exit with status rcode
 int usage(int rcode) {
-  cout << R"EOF(upg - automation script for upgrading packages with APT,
-Pacman, Flatpak, and Snap. Also performs some other tasks
-like initramfs regeneration, GRUB configuration updates,
-indexing of the filesystem and clearing of the cache
-memory.
-Usage: upg [-hnyv]
+  cout << R"EOF(Usage: upg [-hnyv]
+  
+upg - automation script for upgrading packages with APT, Pacman, Flatpak, 
+and Snap. Also performs some other tasks like initramfs regeneration, 
+GRUB configuration updates, indexing of the filesystem and clearing of 
+the cache memory.
 
--h, --help, --usage     Prints this help document and
-                        terminates the program.
 
--n, --assumeno          Skips the filesystem index prompt
-                        entirely, without performing any
-                        action.
+-h, --help, --usage     Prints this help document and terminates the 
+                        program.
 
--v, --verbose           Allows some commands to output
-                        verbosely.
+-n, --assumeno          Skips the filesystem index prompt without 
+                        performing any action.
 
--y, --assumeyes         Skips the filesystem index prompt, 
-                        performing all actions.
+-v, --verbose           Allows some commands to output verbosely.
 
-Only one argument may be passed to the program at at time.
-If multiple arguments are passed, only the first one will
-be recognized.
+-y, --assumeyes         Skips the filesystem index prompt, performing all 
+                        actions.
 
-Report bugs to <https://github.com/Xatra1/upg>
+Report bugs to https://github.com/Xatra1/upg
 )EOF";
   exit(rcode);
 }
 
 int main(int argc, char *argv[]) {
   int index;
-  const struct option longopts[] = {{"help", no_argument, 0, 'h'},
-                                    {"usage", no_argument, 0, 'h'},
-                                    {"assumeno", no_argument, 0, 'n'},
-                                    {"verbose", no_argument, 0, 'v'},
-                                    {"assumeyes", no_argument, 0, 'y'}};
-  switch (getopt_long(argc, argv, "hnyv", longopts, &index)) {
-  case 'h':
-    usage(0);
-    break;
-  case 'v':
-    cout << "\e[33;1;37mRunning in verbose mode. Supported commands will use "
-            "verbose output.\e[0m\n";
-    verbose = true;
-    break;
-  case 'n':
-    assumeno = 1;
-    break;
-  case 'y':
-    assumeyes = 1;
+  for (;;) {
+
+    switch (getopt_long(argc, argv, "hnyv", longopts, &index)) {
+
+    case 'v':
+      cout << "\e[33;1;37mRunning in verbose mode. Supported commands will use "
+              "verbose output.\e[0m\n";
+      verbose = true;
+      continue;
+
+    case 'n':
+      assumeno = 1;
+      continue;
+
+    case 'y':
+      assumeyes = 1;
+      continue;
+
+    case 'h':
+      usage(0);
+      break;
+
+    default:
+      usage(1);
+      break;
+
+    case -1:
+      break;
+    }
+
     break;
   }
   if (assumeyes && assumeno) {
