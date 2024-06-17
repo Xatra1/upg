@@ -1,6 +1,5 @@
 # About
 upg is a very simple shell script designed to automate common tasks related to Linux package managers, along with some extras.<br>
-<br>
 
 More specifically, this script will do the following:<br>
 **apt:**
