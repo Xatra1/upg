@@ -1,38 +1,34 @@
 # About
-This script will utilize the following commands on your system:
-- sudo\[*]
-- APT/Pacman
-- Flatpak
-- Snap
-- updatedb
-- update-initramfs/mkinitcpio
-- grub-mkconfig\[*]
-- sync\[*]
-- sysctl\[*] (Not to be confused with 'systemctl')
-- rm\[*]  
-  
-\[*] - Required.  
-Any commands that are not required will be automatically skipped if not found.
-### Building from Source
-Dependencies:
-- g++
-- make
-- git
-- dpkg\[*]  
-  
-\[*] - Optional.
-  
-Open a terminal and clone the repo:  
-``git clone https://github.com/Xatra1/upg``  
-Or clone via SSH:  
-``git clone git@github.com:Xatra1/upg``  
-  
-Then, you need to create the proper directories for the make operation to work.  
-``cd`` into the folder that contains the cloned files and run the following:  
-``mkdir src/deb/usr && mkdir src/deb/usr/bin``  
+upg is a very simple shell script designed to automate common tasks related to Linux package managers, along with some extras.<br>
+<br>
 
-After setting up the proper directories, run ``make upg`` to compile the executable.  
-  
-You then have two options to install the program:  
-``make build-pkg`` - Builds and installs a Debian package. Requires dpkg.  
-``make install`` - Installs the program into the /usr/bin directory.
+More specifically, this script will do the following:<br>
+**apt:**
+<br>Finish configuring packages if apt was interrupted prior.
+<br>Update repositories.
+<br>Upgrade packages and purge unused dependencies
+<br>Purge left over configuration files from previously uninstalled packages.<br>
+
+**Pacman:**
+<br>Perform a full system upgrade.
+
+**Flatpak:**
+<br>Upgrade all packages.
+
+**Snap:**
+<br>Refresh all packages.
+<br>Remove disabled packages, such as older revisions of currently installed packages or unused dependencies.<br>
+<br>
+If you don't have any of the package managers above, don't worry! These operations will be automatically skipped by the script.
+<br>
+
+**Misc:**
+<br>Rebuild the initrd image. This will first be attempted with update-initramfs, and then with mkinitcpio as a fallback.<br>
+Update the GRUB configuration file.<br>
+Sync cache writes to the disk.<br>
+Drop cache memory.<br>
+(Optional) Clear .cache<br>
+(Optional) Clear your trash.<br>
+(Optional) Update the plocate filesystem index using updatedb.<br>
+<br>
+If you wish for support to be added for a package manager or an additional task to be automated by the script, file a GitHub issue.

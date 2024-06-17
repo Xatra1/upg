@@ -1,0 +1,266 @@
+#!/bin/bash -ue
+
+trap 'exit $?' SIGINT
+
+# Variables
+verbosity=0
+indexans=
+ver="upg v1.0"
+
+initrdcmds="
+update-initramfs
+mkinitcpio
+"
+
+# ANSI sequence color shorthands
+whi='\e[1;37m'
+cy='\e[1;36m'
+yel='\e[1;33m'
+red='\e[1;31m'
+def='\e[0m'
+
+# Print the help document and exit with status $1
+usage() {
+  cat <<EOF
+Usage: upg [OPTION...]
+
+upg - automation script for upgrading packages with apt, Pacman, Flatpak,
+and Snap. Also performs some other tasks like initramfs regeneration,
+GRUB configuration updates, indexing of the filesystem, clearing of the
+cache memory, and removal of all files in the user's trash.
+
+-h, --help, --usage     Prints this help document and terminates the
+			program.
+
+-n, --assumeno		Skips all prompts without performing any action.
+
+-v, --verbose		Increases the verbosity level. Additional 'v's
+			will further increase the verbosity level up to
+			a max of 4.
+
+--verbosity=LEVEL	Sets the verbosity level to LEVEL. LEVEL cannot
+			be greater than 4 or less than 0.
+
+-y, --assumeyes		Skips all prompts, assuming yes to be the answer
+			for each.
+
+Report bugs to https://github.com/Xatra1/upg
+EOF
+  exit $1
+}
+
+# Log warning/error/info messages to the console using a consistent format:
+# "path/to/program:linenum:W: verbose warning"
+# or "W: non-verbose warning"
+
+# $1 determines if the message to be logged is a warning, error, or info message.
+# $2 contains the message to be logged
+# $3 contains the line number of the logged message
+
+# Note: A log will not be made if $3 is unset when verbose mode is enabled by the user.
+log() {
+  if [ -z $3 ] && [ $verbosity = 2 -o $verbosity -gt 2 ]; then
+    echo -e "${cy}PROGRAM ERROR: Parameter 3 (LINENO) left unset in call to log function.$def"
+    exit 1
+  else
+    line=$3
+  fi
+  if [ $verbosity = 2 -o $verbosity -gt 2 ] && [ $1 = 'info' ]; then
+    echo -e "${0}:${line}:${whi}I:$def $2"
+  elif [ $verbosity = 0 ] && [ $1 = 'info' ]; then
+    echo -e "${whi}I:$def $2"
+  elif [ $verbosity = 2 -o $verbosity -gt 2 ] && [ $1 = 'warn' ]; then
+    echo -e "${0}:${line}:${yel}W:$def $2"
+  elif [ $verbosity = 0 ] && [ $1 = 'warn' ]; then
+    echo -e "${yel}W:$def $2"
+  elif [ $verbosity = 2 -o $verbosity -gt 2 ] && [ $1 = 'error' ]; then
+    echo -e "${0}:${line}:${red}E:$def $2"
+  elif [ $verbosity = 0 ] && [ $1 = 'error' ]; then
+    echo -e "${red}E:$def $2"
+  fi
+}
+
+# Parse any arguments passed to the program
+# Refer to the usage document above or run 'upg -h' for more information
+args=$(getopt -n $0 -o hnvy -l help,usage,assumeno,verbose,verbosity:,xassumeyes -- "$@")
+eval set -- ${args}
+
+while true; do
+  case $1 in
+
+  -h | --help | --usage)
+    usage 0
+    shift
+    ;;
+
+  -n | --assumeno)
+    indexans='n'
+    shift
+    ;;
+
+  -v | --verbose)
+    if [ $verbosity = 4 ]; then
+      log 'error' "Cannot have a verbosity level greater than 4." $LINENO
+      exit 1
+    elif [ $verbosity = 3 ]; then
+      verbosity=4
+    elif [ $verbosity = 2 ]; then
+      verbosity=3
+    elif [ $verbosity = 1 ]; then
+      verbosity=2
+    else
+      verbosity=1
+    fi
+    shift
+    ;;
+
+  --verbosity)
+    if [ ! $2 -gt 4 ] && [ ! $2 -lt 0 ]; then
+      verbosity=$2
+    else
+      log 'error' "Invalid verbosity level $2. Try '$(echo "$0" | cut -c 10-) --help' for more information." $LINENO
+      exit 1
+    fi
+    shift 2
+    ;;
+
+  -y | --assumeyes)
+    indexans='y'
+    shift
+    ;;
+
+  --)
+    shift
+    break
+    ;;
+
+  esac
+done
+
+effects() {
+  if [ $verbosity = 1 ] || [ $verbosity -gt 1 ]; then log 'info' "Supported commands will use verbose output." $LINENO; fi
+  if [ $verbosity = 2 ] || [ $verbosity -gt 2 ]; then log 'info' "Messages received from the script will contain line numbers." $LINENO; fi
+  if [ $verbosity = 3 ] || [ $verbosity -gt 3 ]; then log 'info' "Commands will output themselves to the console as they execute." $LINENO; fi
+  if [ $verbosity = 4 ] || [ $verbosity -gt 4 ]; then log 'info' "Pieces of the shell script will output to the console as it runs." $LINENO; fi
+}
+
+if [ $verbosity = 1 ] || [ $verbosity -gt 1 ]; then echo -e "${whi}Verbosity level set to $verbosity.$def\n$(effects)"; vbsearg='-vv'; sleep 2; fi
+if [ $verbosity = 3 ] || [ $verbosity -gt 3 ]; then set -x; fi
+if [ $verbosity = 4 ]; then set -v; fi
+
+# Prevent 'vbsearg: unbound variable'
+if [ $verbosity = 0 ]; then vbsearg=''; fi
+
+# apt-get is an older variant of apt, with the same functionality. the 'apt' command does not exist on older distros.
+if [ -x /usr/bin/apt-get ]; then
+  sudo dpkg --configure -a
+
+  echo
+  log 'info' "Updating repositories..." $LINENO
+  echo
+
+  sudo apt-get update
+
+  echo
+  log 'info' "Upgrading Debian packages and autoremoving unused dependencies..." $LINENO
+  echo
+
+  sudo apt-get dist-upgrade --autoremove --purge -y
+
+  echo
+  log 'info' "Purging previously removed packages..." $LINENO
+  echo
+
+  sudo apt-get purge -y $(dpkg -l | grep '^rc' | awk '{print $2}')
+else
+  log 'warn' "APT not found." $LINENO
+fi
+echo
+
+if [ -x /usr/bin/pacman ]; then
+  log 'info' "Upgrading Pacman packages..." $LINENO
+  time sudo pacman -Syu $vbsearg
+else
+  log 'warn' "Pacman not found." $LINENO
+fi
+
+echo
+if [ -x /usr/bin/flatpak ]; then
+  log 'info' "Upgrading Flatpak packages..." $LINENO
+  echo
+  sudo flatpak update --assumeyes $vbsearg
+else
+  log 'warn' "Flatpak not found." $LINENO
+fi
+
+echo
+if [ -x /usr/bin/snap ]; then
+  log 'info' "Upgrading Snap packages..." $LINENO
+  echo
+  sudo snap refresh
+
+  echo
+  log 'info' "Removing disabled Snap packages..." $LINENO
+  echo
+  LANG=C snap list --all | awk '/disabled/{print $1, $3}' |
+    while read snapname revision; do
+      sudo snap remove "$snapname" --revision="$revision"
+    done
+else
+  log 'warn' "Snap not found." $LINENO
+fi
+
+echo
+log 'info' "Rebuilding initrd image..." $LINENO
+echo
+if [ -x /usr/sbin/update-initramfs ]; then
+  sudo update-initramfs -u $vbsearg
+else
+  log 'info' "update-initramfs not found. Attempting with mkinitcpio..." $LINENO
+  sudo mkinitcpio -P $vbsearg
+fi
+
+echo
+log 'info' "Updating GRUB configuration file..." $LINENO
+echo
+sudo grub-mkconfig -o /boot/grub/grub.cfg
+
+echo
+log 'info' "Synchronizing cache writes..." $LINENO
+echo
+sync
+
+log 'info' "Dropping cache memory..." $LINENO
+echo
+sudo sysctl -w vm.drop_caches=3
+
+if [ -z $indexans ]; then read -p "Clear \"~/.cache\"? [y]es, [n]o: " ans; fi
+if [ ! -z $indexans ] && [ $indexans = 'y' ] || [[ $ans =~ ^([yY][eE][sS]|[yY])$ ]]; then
+  echo
+  log 'info' "Removing contents of \"/home/$(whoami)/.cache\"..." $LINENO
+  echo
+
+  rm -rf $vbsearg ~/.cache
+fi
+
+if [ -z $indexans ]; then read -p "Clear the trash? [y]es, [n]o: " ans; fi
+if [ ! -z $indexans ] && [ $indexans = 'y' ] || [[ $ans =~ ^([yY][eE][sS]|[yY])$ ]]; then
+  echo
+  log 'info' "Clearing $(whoami)'s trash..." $LINENO
+  echo
+
+  rm -rf $vbsearg ~/.local/share/Trash/files/*
+fi
+
+if [ -z $indexans ]; then read -p "Index the filesystem? This can take a very long time, depending on terminal speed. [y]es, [n]o: " ans; fi
+if [ ! -z $indexans ] && [ $indexans = 'y' ] || [[ $ans =~ ^([yY][eE][sS]|[yY])$ ]]; then
+  echo
+  log 'info' "Updating plocate filesystem database..." $LINENO
+  echo
+
+  sudo updatedb $vbsearg
+fi
+
+echo
+log 'info' "\aScript completed." $LINENO
+echo
