@@ -31,3 +31,11 @@ Drop cache memory.<br>
 (Optional) Update the plocate filesystem index using updatedb.<br>
 <br>
 If you wish for support to be added for a package manager or an additional task to be automated by the script, file a GitHub issue.
+
+# Installing
+You can install the script into the /bin directory using the standard coreutils 'install' command, like so:<br>
+``sudo install /path/to/upg /bin``<br>
+<br>
+Or, you can append the directory to the upg program to your PATH variable.<br>
+``export PATH=$PATH:/path/to/upg/parent/directory``<br>
+Adding the line above to your .bashrc file will execute it at shell start, allowing upg to be always available!

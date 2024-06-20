@@ -12,6 +12,13 @@ update-initramfs
 mkinitcpio
 "
 
+# Cut off the /usr/bin/ pathname if the program was executed from the /usr/bin directory.
+if [ "$0" = "/usr/bin/upg" ]; then
+  progname=$(echo "$0" | cut -c 10-)
+else
+  progname=$0
+fi
+
 # ANSI sequence color shorthands
 whi='\e[1;37m'
 cy='\e[1;36m'
@@ -66,15 +73,15 @@ log() {
     line=$3
   fi
   if [ $verbosity = 2 -o $verbosity -gt 2 ] && [ $1 = 'info' ]; then
-    echo -e "${0}:${line}:${whi}I:$def $2"
+    echo -e "${progname}:${line}:${whi}I:$def $2"
   elif [ $verbosity = 1 ] && [ $1 = 'info' ]; then
     echo -e "${whi}I:$def $2"
   elif [ $verbosity = 2 -o $verbosity -gt 2 ] && [ $1 = 'warn' ]; then
-    echo -e "${0}:${line}:${yel}W:$def $2"
+    echo -e "${progname}:${line}:${yel}W:$def $2"
   elif [ $verbosity = 1 ] && [ $1 = 'warn' ]; then
     echo -e "${yel}W:$def $2"
   elif [ $verbosity = 2 -o $verbosity -gt 2 ] && [ $1 = 'error' ]; then
-    echo -e "${0}:${line}:${red}E:$def $2"
+    echo -e "${progname}:${line}:${red}E:$def $2"
   elif [ $verbosity = 1 ] && [ $1 = 'error' ]; then
     echo -e "${red}E:$def $2"
   fi
@@ -117,7 +124,7 @@ while true; do
     if [ ! $2 -gt 4 ] && [ ! $2 -lt 0 ]; then
       verbosity=$2
     else
-      log 'error' "Invalid verbosity level $2. Try '$(echo "$0" | cut -c 10-) --help' for more information." $LINENO
+      log 'error' "Invalid verbosity level $2. Try '$progname --help' for more information." $LINENO
       exit 1
     fi
     shift 2
