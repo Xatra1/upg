@@ -6,7 +6,7 @@ More specifically, this script will do the following:<br>
 <br>Finish configuring packages if apt was interrupted prior.
 <br>Update repositories.
 <br>Upgrade packages and purge unused dependencies
-<br>Purge left over configuration files from previously uninstalled packages.<br>
+<br>Purge leftover configuration files from previously uninstalled packages.<br>
 
 **Pacman:**
 <br>Perform a full system upgrade.
