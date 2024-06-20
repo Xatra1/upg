@@ -60,26 +60,25 @@ EOF
 # Note: A log will not be made if $3 is unset when verbose mode is enabled by the user.
 log() {
   if [ -z $3 ] && [ $verbosity = 2 -o $verbosity -gt 2 ]; then
-    echo -e "${cy}PROGRAM ERROR: Parameter 3 (LINENO) left unset in call to log function.$def"
+    echo -e "${cy}PROGRAM ERROR: Parameter 3 left unset in call to log function.$def"
     exit 1
   else
     line=$3
   fi
   if [ $verbosity = 2 -o $verbosity -gt 2 ] && [ $1 = 'info' ]; then
     echo -e "${0}:${line}:${whi}I:$def $2"
-  elif [ $verbosity = 0 ] && [ $1 = 'info' ]; then
+  elif [ $verbosity = 1 ] && [ $1 = 'info' ]; then
     echo -e "${whi}I:$def $2"
   elif [ $verbosity = 2 -o $verbosity -gt 2 ] && [ $1 = 'warn' ]; then
     echo -e "${0}:${line}:${yel}W:$def $2"
-  elif [ $verbosity = 0 ] && [ $1 = 'warn' ]; then
+  elif [ $verbosity = 1 ] && [ $1 = 'warn' ]; then
     echo -e "${yel}W:$def $2"
   elif [ $verbosity = 2 -o $verbosity -gt 2 ] && [ $1 = 'error' ]; then
     echo -e "${0}:${line}:${red}E:$def $2"
-  elif [ $verbosity = 0 ] && [ $1 = 'error' ]; then
+  elif [ $verbosity = 1 ] && [ $1 = 'error' ]; then
     echo -e "${red}E:$def $2"
   fi
 }
-
 # Parse any arguments passed to the program
 # Refer to the usage document above or run 'upg -h' for more information
 args=$(getopt -n $0 -o hnvy -l help,usage,assumeno,verbose,verbosity:,xassumeyes -- "$@")
@@ -217,7 +216,7 @@ if [ -x /usr/sbin/update-initramfs ]; then
   sudo update-initramfs -u $vbsearg
 else
   log 'info' "update-initramfs not found. Attempting with mkinitcpio..." $LINENO
-  sudo mkinitcpio -P $vbsearg
+  sudo mkinitcpio -P $vbsearg || log 'error' "Unable to rebuild the initrd image. Your distro is either missing it's initrd creation tool or your distro's command is not supported.\nSupported commands: $initrdcmds" $LINENO; exit
 fi
 
 echo
