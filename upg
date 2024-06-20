@@ -81,7 +81,7 @@ log() {
 }
 # Parse any arguments passed to the program
 # Refer to the usage document above or run 'upg -h' for more information
-args=$(getopt -n $0 -o hnvy -l help,usage,assumeno,verbose,verbosity:,xassumeyes -- "$@")
+args=$(getopt -n $0 -o hnvy -l help,usage,assumeno,verbose,verbosity:,assumeyes -- "$@")
 eval set -- ${args}
 
 while true; do
@@ -232,6 +232,7 @@ sync
 log 'info' "Dropping cache memory..." $LINENO
 echo
 sudo sysctl -w vm.drop_caches=3
+echo
 
 if [ -z $indexans ]; then read -p "Clear \"~/.cache\"? [y]es, [n]o: " ans; fi
 if [ ! -z $indexans ] && [ $indexans = 'y' ] || [[ $ans =~ ^([yY][eE][sS]|[yY])$ ]]; then
@@ -241,6 +242,7 @@ if [ ! -z $indexans ] && [ $indexans = 'y' ] || [[ $ans =~ ^([yY][eE][sS]|[yY])$
 
   rm -rf $vbsearg ~/.cache
 fi
+echo
 
 if [ -z $indexans ]; then read -p "Clear the trash? [y]es, [n]o: " ans; fi
 if [ ! -z $indexans ] && [ $indexans = 'y' ] || [[ $ans =~ ^([yY][eE][sS]|[yY])$ ]]; then
