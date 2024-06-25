@@ -13,7 +13,7 @@ mkinitcpio
 "
 
 # Cut off the /usr/bin/ pathname if the program was executed from the /usr/bin directory.
-if [ "$0" = "/usr/bin/upg" ]; then
+if [ "$(echo "$0" | cut -c -9)" = "/usr/bin/" ]; then
   progname=$(echo "$0" | cut -c 10-)
 else
   progname=$0
@@ -86,6 +86,7 @@ log() {
     echo -e "${red}E:$def $2"
   fi
 }
+
 # Parse any arguments passed to the program
 # Refer to the usage document above or run 'upg -h' for more information
 args=$(getopt -n $0 -o hnvy -l help,usage,assumeno,verbose,verbosity:,assumeyes -- "$@")
