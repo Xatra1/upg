@@ -1,4 +1,4 @@
-#!/bin/bash -ue
+#!/bin/bash -e
 
 trap 'exit $?' SIGINT
 
@@ -155,9 +155,6 @@ if [ $verbosity = 1 ] || [ $verbosity -gt 1 ]; then echo -e "${whi}Verbosity lev
 if [ $verbosity = 3 ] || [ $verbosity -gt 3 ]; then set -x; fi
 if [ $verbosity = 4 ]; then set -v; fi
 
-# Prevent 'vbsearg: unbound variable'
-if [ $verbosity = 0 ]; then vbsearg=''; fi
-
 # apt-get is an older variant of apt, with the same functionality. the 'apt' command does not exist on older distros.
 if [ -x /usr/bin/apt-get ]; then
   sudo dpkg --configure -a
@@ -215,6 +212,14 @@ if [ -x /usr/bin/snap ]; then
     done
 else
   log 'warn' "Snap not found." $LINENO
+fi
+
+if [ -x /usr/bin/npm ]; then
+  log 'info' "Upgrading npm packages..." $LINENO
+  echo
+  npm upgrade
+else
+  log 'warn' "npm not found." $LINENO
 fi
 
 echo
