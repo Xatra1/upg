@@ -12,6 +12,9 @@ More specifically, this script will do the following:<br>
 **Pacman:**
 <br>Perform a full system upgrade.
 
+**DNF:**
+<br>Upgrade all packages.
+
 **Flatpak:**
 <br>Upgrade all packages.
 
@@ -26,8 +29,8 @@ If you don't have any of the package managers above, don't worry! These operatio
 <br>
 
 **Misc:**
-<br>Rebuild the initrd image. This will first be attempted with update-initramfs, and then with mkinitcpio as a fallback.<br>
-Update the GRUB configuration file.<br>
+<br>Rebuild the initrd image. This will first be attempted with update-initramfs, then with mkinitcpio, then with dracut.<br>
+Update the GRUB(2) configuration file.<br>
 Sync cache writes to the disk.<br>
 Drop cache memory.<br>
 (Optional) Clear .cache<br>

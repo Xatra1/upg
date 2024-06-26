@@ -10,6 +10,7 @@ ver="upg v1.0"
 initrdcmds="
 update-initramfs
 mkinitcpio
+dracut
 "
 
 # Cut off the /usr/bin/ pathname if the program was executed from the /usr/bin directory.
@@ -183,9 +184,18 @@ echo
 
 if [ -x /usr/bin/pacman ]; then
   log 'info' "Upgrading Pacman packages..." $LINENO
-  time sudo pacman -Syu $vbsearg
+  sudo pacman -Syu $vbsearg
 else
   log 'warn' "Pacman not found." $LINENO
+fi
+
+echo
+if [ -x /usr/bin/dnf ]; then
+  log 'info' "Upgrading RPM packages..." $LINENO
+  echo
+  sudo dnf upgrade -y $vbsearg
+else
+  log 'warn' "dnf not found." $LINENO
 fi
 
 echo
@@ -214,13 +224,16 @@ else
   log 'warn' "Snap not found." $LINENO
 fi
 
+echo
+if [ ! -z $vbsearg ]; then vbsearg="loglevel=--verbose"; fi
 if [ -x /usr/bin/npm ]; then
   log 'info' "Upgrading npm packages..." $LINENO
   echo
-  npm upgrade
+  npm upgrade $vbsearg
 else
   log 'warn' "npm not found." $LINENO
 fi
+if [ ! -z $vbsearg ]; then vbsearg="-vv"; fi
 
 echo
 log 'info' "Rebuilding initrd image..." $LINENO
@@ -229,13 +242,20 @@ if [ -x /usr/sbin/update-initramfs ]; then
   sudo update-initramfs -u $vbsearg
 else
   log 'info' "update-initramfs not found. Attempting with mkinitcpio..." $LINENO
-  sudo mkinitcpio -P $vbsearg || log 'error' "Unable to rebuild the initrd image. Your distro is either missing it's initrd creation tool or your distro's command is not supported.\nSupported commands: $initrdcmds" $LINENO; exit
+  if [ -x /usr/bin/mkinitcpio ]; then
+    sudo mkinitcpio -P $vbsearg
+  else
+    log 'info' "mkinitcpio not found. Attempting with dracut..." $LINENO
+    sudo dracut --force $vbsearg || log 'error' "Unable to rebuild the initrd image. Your distro is either missing it's initrd creation tool or your distro's command is not supported.\nSupported commands: $initrdcmds" $LINENO
+  fi
 fi
 
-echo
-log 'info' "Updating GRUB configuration file..." $LINENO
-echo
-sudo grub-mkconfig -o /boot/grub/grub.cfg
+if [ -x /usr/sbin/grub-mkconfig ] || [ -x /usr/sbin/grub2-mkconfig ]; then
+  echo
+  log 'info' "Updating GRUB configuration file..." $LINENO
+  echo
+  sudo grub-mkconfig -o /boot/grub/grub.cfg || sudo grub2-mkconfig -o /boot/grub2/grub.cfg
+fi
 
 echo
 log 'info' "Synchronizing cache writes..." $LINENO
@@ -255,8 +275,8 @@ if [ ! -z $indexans ] && [ $indexans = 'y' ] || [[ $ans =~ ^([yY][eE][sS]|[yY])$
 
   rm -rf $vbsearg ~/.cache
 fi
-echo
 
+echo
 if [ -z $indexans ]; then read -p "Clear the trash? [y]es, [n]o: " ans; fi
 if [ ! -z $indexans ] && [ $indexans = 'y' ] || [[ $ans =~ ^([yY][eE][sS]|[yY])$ ]]; then
   echo
@@ -266,13 +286,15 @@ if [ ! -z $indexans ] && [ $indexans = 'y' ] || [[ $ans =~ ^([yY][eE][sS]|[yY])$
   rm -rf $vbsearg ~/.local/share/Trash/files/*
 fi
 
-if [ -z $indexans ]; then read -p "Index the filesystem? This can take a very long time, depending on terminal speed. [y]es, [n]o: " ans; fi
-if [ ! -z $indexans ] && [ $indexans = 'y' ] || [[ $ans =~ ^([yY][eE][sS]|[yY])$ ]]; then
-  echo
-  log 'info' "Updating plocate filesystem database..." $LINENO
-  echo
+if [ -x /usr/bin/updatedb ]; then
+  if [ -z $indexans ]; then read -p "Index the filesystem? This can take a very long time, depending on terminal speed. [y]es, [n]o: " ans; fi
+  if [ ! -z $indexans ] && [ $indexans = 'y' ] || [[ $ans =~ ^([yY][eE][sS]|[yY])$ ]]; then
+    echo
+    log 'info' "Updating plocate filesystem database..." $LINENO
+    echo
 
-  sudo updatedb $vbsearg
+    sudo updatedb $vbsearg
+  fi
 fi
 
 echo
