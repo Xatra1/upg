@@ -2,6 +2,7 @@
 upg is a very simple shell script designed to automate common tasks related to Linux package managers, along with some extras.<br>
 
 More specifically, this script will do the following:<br>
+<br>
 **apt:**
 <br>Finish configuring packages if apt was interrupted prior.
 <br>Update repositories.
@@ -17,6 +18,9 @@ More specifically, this script will do the following:<br>
 **Snap:**
 <br>Refresh all packages.
 <br>Remove disabled packages, such as older revisions of currently installed packages or unused dependencies.<br>
+
+**npm:**
+<br>Upgrade all packages.<br>
 <br>
 If you don't have any of the package managers above, don't worry! These operations will be automatically skipped by the script.
 <br>
