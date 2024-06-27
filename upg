@@ -225,7 +225,7 @@ else
 fi
 
 echo
-if [ ! -z $vbsearg ]; then vbsearg="loglevel=--verbose"; fi
+if [ ! -z $vbsearg ]; then vbsearg="--loglevel=verbose"; fi
 if [ -x /usr/bin/npm ]; then
   log 'info' "Upgrading npm packages..." $LINENO
   echo
